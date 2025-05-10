@@ -59,3 +59,5 @@ env.g.dart
 
 #android Firebase
 google-services.json
+
+tree.txt
