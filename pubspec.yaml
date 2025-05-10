@@ -32,6 +32,7 @@ dependencies:
   freezed_annotation: ^3.0.0
   strings: ^3.1.2
   sizer: ^3.0.5
+  firebase_core: ^3.13.0
   
 
 dev_dependencies:

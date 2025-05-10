@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart' show GetIt;
+import 'package:kib_journal/config/firebase_config/config.dart'
+    show FirebaseHelper;
 import 'package:kib_journal/config/routes/router_config.dart'
     show AppNavigation;
 import 'package:kib_journal/core/errors/exceptions.dart' show ExceptionX;
@@ -14,6 +16,7 @@ Future<Result<bool, Exception>> setupServiceLocator() async {
   return await tryResultAsync<bool, Exception>(
     () async {
       _setupAppPrefs();
+      await _setupFirebaseServices();
       _setupAppNavigation();
 
       return true;
@@ -53,3 +56,27 @@ void _setupAppNavigation() {
     getIt.registerSingleton<AppNavigation>(AppNavigation.instance);
   }
 }
+
+Future<Result<bool, Exception>>
+_setupFirebaseServices() async => tryResultAsync(
+  () async {
+    final firebaseInitResult = await FirebaseHelper.initialize();
+    if (firebaseInitResult.isFailure) {
+      throw firebaseInitResult.errorOrNull!;
+    }
+    if (!getIt.isRegistered<FirebaseHelper>()) {
+      getIt.registerSingleton<FirebaseHelper>(FirebaseHelper());
+    }
+    return true;
+  },
+  (err) =>
+      err is Exception
+          ? err
+          : ExceptionX(
+            message:
+                'Error, ${err.runtimeType}, encountered while setting up Firebase services',
+            errorType: err.runtimeType,
+            error: err,
+            stackTrace: StackTrace.current,
+          ),
+);

@@ -6,6 +6,17 @@ import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
 import 'package:kib_journal/presentation/screens/home/home_screen.dart';
 import 'package:kib_journal/presentation/screens/my_home_page.dart';
 
+class AppRoute {
+  final String name;
+  final String path;
+  const AppRoute({required this.name, required this.path});
+}
+
+class AppRoutes {
+  static const AppRoute root = AppRoute(name: 'Root', path: '/');
+  static const AppRoute home = AppRoute(name: 'Home', path: '/home');
+}
+
 class AppNavigation {
   AppNavigation._();
 
@@ -51,10 +62,15 @@ class AppNavigation {
   static List<RouteBase> _routes() {
     return [
       GoRoute(
-        path: '/',
+        path: AppRoutes.root.path,
+        name: AppRoutes.root.name,
         builder: (context, state) => MyHomePage(title: '$appName Demo Page'),
       ),
-      GoRoute(path: '/home', builder: (context, state) => HomeScreen()),
+      GoRoute(
+        path: AppRoutes.home.path,
+        name: AppRoutes.home.name,
+        builder: (context, state) => HomeScreen(),
+      ),
     ];
   }
 
