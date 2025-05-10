@@ -58,6 +58,7 @@ android {
             versionNameSuffix = "-debug"
             isMinifyEnabled = false
             isShrinkResources = false
+            resValue("string", "app_name", "Kib Journal DEBUG")
         }
     }
 }
