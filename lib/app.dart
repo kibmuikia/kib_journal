@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kib_journal/config/theme/app_theme.dart' show AppThemeConfig;
 import 'package:kib_journal/core/constants/app_constants.dart' show appName;
 import 'package:kib_journal/presentation/screens/my_home_page.dart'
     show MyHomePage;
@@ -24,9 +25,9 @@ class KibJournal extends StatelessWidget {
   MaterialApp _materialApp(BuildContext ctx) {
     return MaterialApp(
       title: appName,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: AppThemeConfig.lightTheme,
+      themeMode: ThemeMode.dark,
+      darkTheme: AppThemeConfig.darkTheme,
       home: const MyHomePage(title: '$appName Demo Page'),
     );
   }
