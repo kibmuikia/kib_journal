@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kib_journal/config/routes/router_config.dart';
 import 'package:kib_journal/config/theme/app_theme.dart' show AppThemeConfig;
 import 'package:kib_journal/core/constants/app_constants.dart' show appName;
 import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
@@ -29,12 +30,12 @@ class _KibJournalState extends StateK<KibJournal> {
   }
 
   MaterialApp _materialApp(BuildContext ctx) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: appName,
       theme: AppThemeConfig.lightTheme,
       themeMode: ThemeMode.dark,
       darkTheme: AppThemeConfig.darkTheme,
-      home: const MyHomePage(title: '$appName Demo Page'),
+      routerConfig: appRouteConfig,
     );
   }
 }
