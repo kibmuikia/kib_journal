@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:kib_journal/config/theme/app_theme.dart' show AppThemeConfig;
 import 'package:kib_journal/core/constants/app_constants.dart' show appName;
+import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
 import 'package:kib_journal/presentation/screens/my_home_page.dart'
     show MyHomePage;
 import 'package:sizer/sizer.dart';
 
-class KibJournal extends StatelessWidget {
-  const KibJournal({super.key});
+class KibJournal extends StatefulWidgetK {
+  const KibJournal({super.key, super.tag = 'KibJournal'});
 
+  @override
+  StateK<KibJournal> createState() => _KibJournalState();
+}
+
+class _KibJournalState extends StateK<KibJournal> {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {

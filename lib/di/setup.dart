@@ -1,5 +1,7 @@
 import 'package:get_it/get_it.dart' show GetIt;
 import 'package:kib_journal/core/errors/exceptions.dart' show ExceptionX;
+import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
+    show AppPrefsAsyncManager, AppPrefs;
 import 'package:kib_utils/kib_utils.dart';
 
 // Global GetIt instance
@@ -9,7 +11,8 @@ final getIt = GetIt.instance;
 Future<Result<bool, Exception>> setupServiceLocator() async {
   return await tryResultAsync<bool, Exception>(
     () async {
-      // services to register
+      _setupAppPrefs();
+
       return true;
     },
     (err) =>
@@ -23,4 +26,13 @@ Future<Result<bool, Exception>> setupServiceLocator() async {
               stackTrace: StackTrace.current,
             ),
   );
+}
+
+/// Setup Kib Journal Shared-Preferences
+void _setupAppPrefs() {
+  AppPrefs.init();
+
+  if (!getIt.isRegistered<AppPrefsAsyncManager>()) {
+    getIt.registerSingleton<AppPrefsAsyncManager>(AppPrefs.app);
+  }
 }

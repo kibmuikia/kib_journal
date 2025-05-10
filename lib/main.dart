@@ -6,6 +6,7 @@ import 'package:kib_debug_print/kib_debug_print.dart'
     show DebugPrintService, kprint;
 import 'package:kib_journal/app.dart';
 import 'package:kib_journal/di/setup.dart' show getIt, setupServiceLocator;
+import 'package:kib_utils/kib_utils.dart';
 
 part 'main_ext.dart';
 

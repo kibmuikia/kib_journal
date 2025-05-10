@@ -17,6 +17,12 @@ Future<void> _initializeCoreServices() async {
   DebugPrintService.initialize();
 
   // Setup all service dependencies.
-  await setupServiceLocator();
+  final result = await setupServiceLocator();
+  switch (result) {
+    case Success<bool, Exception>():
+      break;
+    case Failure<bool, Exception>():
+      throw result.error;
+  }
   await getIt.allReady();
 }

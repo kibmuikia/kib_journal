@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kib_debug_print/kib_debug_print.dart';
+import 'package:kib_journal/core/preferences/shared_preferences_manager.dart';
+import 'package:kib_journal/core/utils/export.dart';
+import 'package:kib_journal/di/setup.dart' show getIt;
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -20,6 +24,20 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  late final AppPrefsAsyncManager _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefs = getIt<AppPrefsAsyncManager>();
+
+    // TODO: remove test of prefs
+    postFrame(() async {
+      kprint.lg('MyHomePage:initState: ${await _prefs.isFirstLaunch()}');
+      await _prefs.setFirstLaunch(false);
+      kprint.lg('MyHomePage:initState: ${await _prefs.isFirstLaunch()}');
+    });
+  }
 
   void _incrementCounter() {
     setState(() {
