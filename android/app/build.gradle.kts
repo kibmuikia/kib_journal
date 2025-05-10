@@ -46,7 +46,7 @@ android {
     defaultConfig {
         applicationId = "kib.dev.kib_journal"
         // You can update the following values to match your application needs. https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23 // flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
