@@ -1,16 +1,27 @@
 # kib_journal
 
-A new Flutter project.
+A Flutter Android app for sharing anonymous daily journal entries.
+
+## Features
+
+- Journal sharing, 500 character limit per entry
+
+## Tech Stack
+
+- Flutter SDK: ^3.7.2
+- Firebase
+- GetIt for dependency injection
+- Go-Router for navigation
+- Bloc for state management
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+1. Clone the repository
+2. Run `flutter pub get`
+3. Configure Firebase project
+4. Run the app with `flutter run`
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Generate required files with:
+```bash
+flutter pub run build_runner build --delete-conflicting-outputs
+```
