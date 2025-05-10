@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:kib_debug_print/kib_debug_print.dart';
-import 'package:kib_journal/core/preferences/shared_preferences_manager.dart';
-import 'package:kib_journal/core/utils/export.dart';
-import 'package:kib_journal/di/setup.dart' show getIt;
+import 'package:kib_journal/config/routes/navigation_helpers.dart';
+import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart'
+    show StateK, StatefulWidgetK;
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class MyHomePage extends StatefulWidgetK {
+  MyHomePage({super.key, super.tag = "MyHomePage", required this.title});
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -19,25 +18,11 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  StateK<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends StateK<MyHomePage> {
   int _counter = 0;
-  late final AppPrefsAsyncManager _prefs;
-
-  @override
-  void initState() {
-    super.initState();
-    _prefs = getIt<AppPrefsAsyncManager>();
-
-    // TODO: remove test of prefs
-    postFrame(() async {
-      kprint.lg('MyHomePage:initState: ${await _prefs.isFirstLaunch()}');
-      await _prefs.setFirstLaunch(false);
-      kprint.lg('MyHomePage:initState: ${await _prefs.isFirstLaunch()}');
-    });
-  }
 
   void _incrementCounter() {
     setState(() {
@@ -51,7 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget buildWithTheme(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -63,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // TRY THIS: Try changing the color here to a specific color (to
         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
         // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: colorScheme.inversePrimary,
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
@@ -88,9 +73,12 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            Text('$_counter', style: textTheme.headlineMedium),
+            TextButton(
+              onPressed: () {
+                navigateToHome(context);
+              },
+              child: Text('To Home'),
             ),
           ],
         ),

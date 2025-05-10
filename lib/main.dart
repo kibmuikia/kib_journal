@@ -35,7 +35,7 @@ void main() {
 
       await _initializeCoreServices();
 
-      runApp(const KibJournal());
+      runApp(KibJournal());
     },
     (Object error, StackTrace stackTrace) {
       _handleError(

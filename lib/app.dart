@@ -1,23 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:kib_debug_print/kib_debug_print.dart' show kprint;
 import 'package:kib_journal/config/routes/router_config.dart';
 import 'package:kib_journal/config/theme/app_theme.dart' show AppThemeConfig;
 import 'package:kib_journal/core/constants/app_constants.dart' show appName;
+import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
+    show AppPrefsAsyncManager;
+import 'package:kib_journal/core/utils/general_utils.dart' show postFrame;
+import 'package:kib_journal/di/setup.dart' show getIt;
 import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
-import 'package:kib_journal/presentation/screens/my_home_page.dart'
-    show MyHomePage;
 import 'package:sizer/sizer.dart';
 
 class KibJournal extends StatefulWidgetK {
-  const KibJournal({super.key, super.tag = 'KibJournal'});
+  KibJournal({super.key, super.tag = 'KibJournal'});
 
   @override
   StateK<KibJournal> createState() => _KibJournalState();
 }
 
 class _KibJournalState extends StateK<KibJournal> {
+  late final AppPrefsAsyncManager _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefs = getIt<AppPrefsAsyncManager>();
+    _debugUseOfPrefs();
+  }
+
+  @Deprecated('For debugging purposes only')
+  void _debugUseOfPrefs() async {
+    postFrame(() async {
+      kprint.lg(
+        '_KibJournalState:_debugUseOfPrefs: ${await _prefs.isFirstLaunch()}',
+      );
+      await _prefs.setFirstLaunch(false);
+      kprint.lg(
+        '_KibJournalState:_debugUseOfPrefs: ${await _prefs.isFirstLaunch()}',
+      );
+    });
+  }
+
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget buildWithTheme(BuildContext context) {
     return _setupMaterialApp(context);
   }
 
@@ -35,7 +60,7 @@ class _KibJournalState extends StateK<KibJournal> {
       theme: AppThemeConfig.lightTheme,
       themeMode: ThemeMode.dark,
       darkTheme: AppThemeConfig.darkTheme,
-      routerConfig: appRouteConfig,
+      routerConfig: AppNavigation.appRouteConfig,
     );
   }
 }
