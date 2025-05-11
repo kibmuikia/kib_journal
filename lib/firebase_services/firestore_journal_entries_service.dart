@@ -27,7 +27,8 @@ class FirestoreJournalEntriesService {
     );
   }
 
-  String? get _userId => _auth.currentUser?.uid;
+  User? get currentUser => _auth.currentUser;
+  String? get _userId => currentUser?.uid;
 
   void _checkAuth() {
     if (_userId == null) {
