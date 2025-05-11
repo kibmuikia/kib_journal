@@ -120,6 +120,9 @@ class _AddJournalEntryFormState extends StateK<AddJournalEntryForm> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Please enter some content';
                   }
+                  if (value.trim().length > 500) {
+                    return 'Content must be less than 500 characters';
+                  }
                   return null;
                 },
               ),

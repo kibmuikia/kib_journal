@@ -22,10 +22,11 @@ class JournalEntry extends Equatable {
     DateTime? updatedAt,
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now(),
-       assert(content.isNotEmpty),
-       assert(title.isNotEmpty),
-       assert(userId.isNotEmpty),
-       assert(id.isNotEmpty);
+       assert(content.isNotEmpty, 'Content cannot be empty'),
+       assert(content.length > 500, 'Content must be less than 500 characters'),
+       assert(title.isNotEmpty, 'Title cannot be empty'),
+       assert(userId.isNotEmpty, 'User ID cannot be empty'),
+       assert(id.isNotEmpty, 'ID cannot be empty');
 
   @override
   List<Object?> get props => [id, userId, title, content, createdAt, updatedAt];
