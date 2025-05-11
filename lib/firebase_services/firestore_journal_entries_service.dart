@@ -178,7 +178,7 @@ class FirestoreJournalEntriesService {
   }
 
   Future<Result<List<JournalEntry>, Exception>>
-  getJournalEntriesFromLast24Hours() async {
+  getJournalEntriesFromLast24Hours({bool descending = true}) async {
     return await tryResultAsync<List<JournalEntry>, Exception>(
       () async {
         _checkAuth();
@@ -190,6 +190,7 @@ class FirestoreJournalEntriesService {
                   'createdAt',
                   isGreaterThanOrEqualTo: Timestamp.fromDate(last24Hours),
                 )
+                .orderBy('createdAt', descending: descending)
                 .get();
         final List<JournalEntry> entries =
             querySnapshot.docs.map(JournalEntry.fromFirestore).toList();
@@ -252,12 +253,12 @@ class FirestoreJournalEntriesService {
   }
 
   Future<Result<List<UserJournalEntryTracker>, Exception>>
-  getAllUserJournalEntryTrackers() async {
+  getAllUserJournalEntryTrackers({bool descending = true}) async {
     return await tryResultAsync<List<UserJournalEntryTracker>, Exception>(
       () async {
         final querySnapshot =
             await _userJournalEntryTrackersRef
-                .orderBy('lastPostedAt', descending: true)
+                .orderBy('lastPostedAt', descending: descending)
                 .get();
         final List<UserJournalEntryTracker> userJournalEntryTrackers =
             querySnapshot.docs
@@ -271,6 +272,36 @@ class FirestoreJournalEntriesService {
       (dynamic err) => _handleFirestoreError(
         err,
         'Error getting user journal entry trackers',
+      ),
+    );
+  }
+
+  Future<Result<List<UserJournalEntryTracker>, Exception>>
+  getAllUsersWhoPostedInLast24Hours({bool descending = true}) async {
+    return await tryResultAsync<List<UserJournalEntryTracker>, Exception>(
+      () async {
+        final now = DateTime.now();
+        final last24Hours = now.subtract(const Duration(hours: 24));
+        final querySnapshot =
+            await _userJournalEntryTrackersRef
+                .where(
+                  'lastPostedAt',
+                  isGreaterThanOrEqualTo: Timestamp.fromDate(last24Hours),
+                )
+                .orderBy('lastPostedAt', descending: descending)
+                .get();
+        final List<UserJournalEntryTracker> userJournalEntryTrackers =
+            querySnapshot.docs
+                .map(UserJournalEntryTracker.fromFirestore)
+                .toList();
+        kprint.lg(
+          'getAllUsersWhoPostedInLast24Hours: ${userJournalEntryTrackers.length}:\n ${userJournalEntryTrackers.map((e) => '${e.userId}-[${e.lastPostedAt}]').join(', ')}',
+        );
+        return userJournalEntryTrackers;
+      },
+      (dynamic err) => _handleFirestoreError(
+        err,
+        'Error getting users who posted in the last 24 hours',
       ),
     );
   }
