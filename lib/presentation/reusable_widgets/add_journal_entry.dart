@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kib_journal/core/errors/exceptions.dart';
+import 'package:kib_journal/core/utils/general_utils.dart';
 import 'package:kib_journal/data/models/journal_entry.dart';
 import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
 import 'package:kib_journal/providers/firestore_journal_service_provider.dart';
@@ -41,6 +42,7 @@ class _AddJournalEntryFormState extends StateK<AddJournalEntryForm> {
       return;
     }
 
+    context.hideKeyboard();
     setState(() {
       _isSubmitting = true;
       message = null;

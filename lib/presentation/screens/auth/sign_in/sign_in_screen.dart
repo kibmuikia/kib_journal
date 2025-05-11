@@ -5,6 +5,7 @@ import 'package:kib_journal/config/routes/navigation_helpers.dart';
 import 'package:kib_journal/core/constants/app_constants.dart';
 import 'package:kib_journal/core/errors/exceptions.dart' show ExceptionX;
 import 'package:kib_journal/core/preferences/shared_preferences_manager.dart';
+import 'package:kib_journal/core/utils/general_utils.dart';
 import 'package:kib_journal/core/utils/snackbar_utils.dart';
 import 'package:kib_journal/di/setup.dart' show getIt;
 import 'package:kib_journal/firebase_services/firebase_auth_service.dart'
@@ -45,6 +46,7 @@ class _SignInScreenState extends StateK<SignInScreen> {
       return;
     }
 
+    context.hideKeyboard();
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -110,7 +112,7 @@ class _SignInScreenState extends StateK<SignInScreen> {
         final userUid = user.uid;
         await _appPrefs.setCurrentUserUid(userUid);
 
-        navigateToHome(context);
+        (() => navigateToHome(context))();
         break;
       case Failure(error: final Exception e):
         setState(() {

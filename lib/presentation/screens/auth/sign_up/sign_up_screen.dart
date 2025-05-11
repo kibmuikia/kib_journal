@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:kib_debug_print/service.dart' show kprint;
 import 'package:kib_journal/config/routes/navigation_helpers.dart';
 import 'package:kib_journal/core/errors/exceptions.dart' show ExceptionX;
+import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
+    show AppPrefsAsyncManager;
+import 'package:kib_journal/core/utils/export.dart';
 import 'package:kib_journal/di/setup.dart' show getIt;
 import 'package:kib_journal/firebase_services/firebase_auth_service.dart'
     show FirebaseAuthService;
@@ -22,6 +25,7 @@ class _SignUpScreenState extends StateK<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _authService = getIt<FirebaseAuthService>();
+  final _appPrefs = getIt<AppPrefsAsyncManager>();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -38,27 +42,73 @@ class _SignUpScreenState extends StateK<SignUpScreen> {
     if (!_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Please fill in all fields';
+        _errorMessage = 'Ensure form data is valid';
       });
       return;
     }
 
+    context.hideKeyboard();
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
-    final result = await _authService.signUpWithEmailAndPassword(
+    final signUpResult = await _authService.signUpWithEmailAndPassword(
       email: _emailController.text.trim(),
       password: _passwordController.text.trim(),
     );
-    switch (result) {
-      case Success(value: final UserCredential userCredentials):
-        kprint.lg('_signUp: $userCredentials');
-        setState(() {
-          _isLoading = false;
-        });
-        // TODO: Navigate to home screen or have a verification flow
+    switch (signUpResult) {
+      case Success(value: final UserCredential userCredential):
+        kprint.lg('_signUp: $userCredential');
+        final createdUser = userCredential.user;
+        if (createdUser == null) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage =
+                'Received a success sign-up-result, but user is null';
+          });
+          return;
+        }
+
+        informUser('Signing in user ${createdUser.email}');
+        final signInResult = await _authService.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        switch (signInResult) {
+          case Success(value: final UserCredential userCredential):
+            kprint.lg('_signUp: signInResult: $userCredential');
+            final signedInUser = userCredential.user;
+            if (signedInUser == null) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage =
+                    'Received a success sign-in-result, but user is null';
+              });
+              informUser('Failed to sign in user ${createdUser.email}');
+              await Future.delayed(const Duration(milliseconds: 500));
+              (() => navigateToSignIn(context))();
+              return;
+            }
+
+            await _appPrefs.setCurrentUserUid(signedInUser.uid);
+            setState(() {
+              _isLoading = false;
+              _errorMessage = null;
+            });
+            (() => navigateToHome(context))();
+            break;
+          case Failure(error: final Exception e):
+            setState(() {
+              _isLoading = false;
+              _errorMessage = e is ExceptionX ? e.message : e.toString();
+            });
+            informUser('Failed to sign in user ${createdUser.email}');
+            await Future.delayed(const Duration(milliseconds: 500));
+            (() => navigateToSignIn(context))();
+            break;
+        }
         break;
       case Failure(error: final Exception e):
         setState(() {

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart'
         VoidCallback,
         Widget,
         protected;
+import 'package:kib_journal/core/utils/snackbar_utils.dart';
 
 abstract class StatefulWidgetK extends StatefulWidget {
   final String tag;
@@ -63,6 +64,11 @@ abstract class StateK<T extends StatefulWidgetK> extends State<T> {
 
   @protected
   Widget buildWithTheme(BuildContext context);
+
+  @protected
+  void informUser(String message) {
+    if (mounted) context.showMessage(message);
+  }
 }
 
 abstract class StatelessWidgetK extends StatelessWidget {

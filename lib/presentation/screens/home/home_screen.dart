@@ -5,13 +5,14 @@ import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
     show AppPrefsAsyncManager;
 import 'package:kib_journal/core/utils/export.dart';
 import 'package:kib_journal/di/setup.dart' show getIt;
-import 'package:kib_journal/firebase_services/firestore_journal_entries_service.dart'
-    show FirestoreJournalEntriesService;
+import 'package:kib_journal/firebase_services/firebase_auth_service.dart'
+    show FirebaseAuthService;
 import 'package:kib_journal/presentation/reusable_widgets/add_journal_entry.dart';
 import 'package:kib_journal/presentation/reusable_widgets/journal_entry_card.dart';
 import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
 import 'package:kib_journal/providers/firestore_journal_service_provider.dart'
     show FirestoreJournalServiceProvider;
+import 'package:kib_utils/kib_utils.dart';
 import 'package:provider/provider.dart' show Consumer, Provider;
 
 class HomeScreen extends StatefulWidgetK {
@@ -23,9 +24,10 @@ class HomeScreen extends StatefulWidgetK {
 
 class _HomeScreenState extends StateK<HomeScreen> {
   final _appPrefs = getIt<AppPrefsAsyncManager>();
-  final _journalEntriesService = getIt<FirestoreJournalEntriesService>();
+  final _authService = getIt<FirebaseAuthService>();
   late final FirestoreJournalServiceProvider _journalProvider;
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
+  String _currentUserEmail = '';
 
   @override
   void initState() {
@@ -34,7 +36,10 @@ class _HomeScreenState extends StateK<HomeScreen> {
       (value) =>
           kprint.lg('_HomeScreenState:initState: current-user-id: $value'),
     );
-    postFrame(() async => _initJournalProvider());
+    postFrame(() async {
+      _initJournalProvider();
+      _getCurrentUserEmail();
+    });
   }
 
   void _initJournalProvider() async {
@@ -45,19 +50,53 @@ class _HomeScreenState extends StateK<HomeScreen> {
     await _journalProvider.init();
   }
 
+  void _getCurrentUserEmail() async {
+    final user = _authService.currentUser;
+    if (user != null) {
+      setState(() {
+        _currentUserEmail = user.email ?? '-';
+      });
+    }
+    _authService.authStateChanges.listen(
+      (user) {
+        kprint.lg(
+          '_getCurrentUserEmail: email[ ${user == null ? '-' : user.email} ]',
+        );
+        if (user != null) {
+          setState(() {
+            _currentUserEmail = user.email ?? '-';
+          });
+        }
+      },
+      onError: (err) {
+        kprint.err('_getCurrentUserEmail: ${err.toString()}');
+      },
+      onDone: () {
+        kprint.lg('_getCurrentUserEmail: onDone');
+      },
+    );
+  }
+
   Future<void> _refreshJournalEntries({bool refresh = true}) async {
     await _journalProvider.loadJournalEntries(refresh: refresh);
   }
 
-  void informUser(String message) => context.showMessage(message);
-
   void logout(BuildContext context) async {
-    final isUnset = await _appPrefs.setCurrentUserUid('');
-    if (isUnset) {
-      (() => navigateToSignIn(context))();
-    } else {
-      kprint.err('Failed to unset current user uid');
-      (() => context.showMessage('Unable to logout'))();
+    final signOutResult = await _authService.signOut();
+    switch (signOutResult) {
+      case Success():
+        final isUnset = await _appPrefs.setCurrentUserUid('');
+        if (isUnset) {
+          (() => navigateToSignIn(context))();
+        } else {
+          kprint.err('home_screen:logout: Failed to unset current user uid');
+          informUser('Error signing out: Failed to unset user data');
+        }
+        break;
+      case Failure(error: final Exception e):
+        kprint.err('home_screen:logout:Error: $e');
+        informUser('Error signing out: $e');
+        break;
     }
   }
 
@@ -84,7 +123,22 @@ class _HomeScreenState extends StateK<HomeScreen> {
           appBar: AppBar(
             title: InkWell(
               onTap: () => _refreshJournalEntries(),
-              child: const Text('Home Screen'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Home Screen'),
+                  if (_currentUserEmail.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        _currentUserEmail,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
             actions: [
               IconButton(
@@ -113,7 +167,8 @@ class _HomeScreenState extends StateK<HomeScreen> {
                         padding: EdgeInsets.only(bottom: 8.0),
                         child: CircularProgressIndicator(),
                       ),
-                    if (provider.journalEntries.isEmpty)
+                    if (!provider.status.isLoading &&
+                        provider.journalEntries.isEmpty)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: const Text(

@@ -37,7 +37,7 @@ class FirestoreJournalServiceProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   Future<void> init() async {
-    if (_status.isInitial) {
+    if (!_status.isLoading) {
       await loadJournalEntries(refresh: true);
       // TODO: call _setupJournalEntriesStream
     }
