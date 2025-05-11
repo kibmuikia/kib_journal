@@ -40,7 +40,7 @@ class _SignInScreenState extends StateK<SignInScreen> {
     if (!_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Please fill in all fields';
+        _errorMessage = 'Ensure form data is valid';
       });
       return;
     }
