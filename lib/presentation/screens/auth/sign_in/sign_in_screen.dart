@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
 
-class HomeScreen extends StatefulWidgetK {
-  HomeScreen({super.key, super.tag = "HomeScreen"});
+class SignInScreen extends StatefulWidgetK {
+  SignInScreen({super.key, super.tag = "SignInScreen"});
 
   @override
-  StateK<HomeScreen> createState() => _HomeScreenState();
+  StateK<StatefulWidgetK> createState() => _SignInScreenState();
 }
 
-class _HomeScreenState extends StateK<HomeScreen> {
+class _SignInScreenState extends StateK<SignInScreen> {
   @override
   Widget buildWithTheme(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Home Screen")),
+      appBar: AppBar(title: Text("Sign In Screen")),
       body: SafeArea(child: Column(children: [])),
     );
   }

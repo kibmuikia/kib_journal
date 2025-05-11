@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:get_it/get_it.dart' show GetIt;
 import 'package:kib_journal/config/firebase_config/config.dart'
     show FirebaseHelper;
@@ -6,6 +7,8 @@ import 'package:kib_journal/config/routes/router_config.dart'
 import 'package:kib_journal/core/errors/exceptions.dart' show ExceptionX;
 import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
     show AppPrefsAsyncManager, AppPrefs;
+import 'package:kib_journal/firebase_services/firebase_auth_service.dart'
+    show FirebaseAuthService;
 import 'package:kib_utils/kib_utils.dart';
 
 // Global GetIt instance
@@ -67,6 +70,17 @@ _setupFirebaseServices() async => tryResultAsync(
     if (!getIt.isRegistered<FirebaseHelper>()) {
       getIt.registerSingleton<FirebaseHelper>(FirebaseHelper());
     }
+
+    if (!getIt.isRegistered<FirebaseAuth>()) {
+      getIt.registerSingleton<FirebaseAuth>(FirebaseAuth.instance);
+    }
+
+    if (!getIt.isRegistered<FirebaseAuthService>()) {
+      getIt.registerSingleton<FirebaseAuthService>(
+        FirebaseAuthService(firebaseAuth: getIt<FirebaseAuth>()),
+      );
+    }
+
     return true;
   },
   (err) =>

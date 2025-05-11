@@ -33,9 +33,15 @@ class AppPrefs {
 class AppPrefsAsyncManager extends BasePrefsAsync {
   static const _prefix = 'app_';
   static const _keyFirstLaunch = 'first_launch';
+  static const _keyCurrentUserUid = 'current_user_uid';
 
-  AppPrefsAsyncManager() : super(prefix: _prefix, allowList: {_keyFirstLaunch});
+  AppPrefsAsyncManager() : super(prefix: _prefix, allowList: {_keyFirstLaunch, _keyCurrentUserUid});
 
+  // first_launch
   Future<bool?> isFirstLaunch() async => getValue<bool>(_keyFirstLaunch, true);
   Future<bool> setFirstLaunch(bool value) => setValue(_keyFirstLaunch, value);
+
+  // current_user_uid
+  Future<String?> getCurrentUserUid() async => getValue<String>(_keyCurrentUserUid, '');
+  Future<bool> setCurrentUserUid(String value) => setValue(_keyCurrentUserUid, value);
 }
