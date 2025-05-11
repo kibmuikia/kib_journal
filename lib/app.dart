@@ -7,6 +7,9 @@ import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
 import 'package:kib_journal/core/utils/general_utils.dart' show postFrame;
 import 'package:kib_journal/di/setup.dart' show getIt;
 import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
+import 'package:kib_journal/providers/firestore_journal_service_provider.dart'
+    show FirestoreJournalServiceProvider;
+import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class KibJournal extends StatefulWidgetK {
@@ -41,8 +44,19 @@ class _KibJournalState extends StateK<KibJournal> {
   Widget _setupMaterialApp(BuildContext ctx) {
     return Sizer(
       builder: (context, orientation, screenType) {
-        return _materialApp(context);
+        return _setupProviders(context);
       },
+    );
+  }
+
+  MultiProvider _setupProviders(BuildContext ctx) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => FirestoreJournalServiceProvider(),
+        ),
+      ],
+      child: _materialApp(ctx),
     );
   }
 
