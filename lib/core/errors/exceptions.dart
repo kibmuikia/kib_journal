@@ -20,3 +20,8 @@ class ExceptionX extends Equatable implements Exception {
   @override
   String toString() => message;
 }
+
+class UnauthorizedException implements Exception {
+  final String message;
+  UnauthorizedException(this.message);
+}

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show FirebaseFirestore;
 import 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 import 'package:get_it/get_it.dart' show GetIt;
 import 'package:kib_journal/config/firebase_config/config.dart'
@@ -9,6 +10,8 @@ import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
     show AppPrefsAsyncManager, AppPrefs;
 import 'package:kib_journal/firebase_services/firebase_auth_service.dart'
     show FirebaseAuthService;
+import 'package:kib_journal/firebase_services/firestore_journal_entries_service.dart'
+    show FirestoreJournalEntriesService;
 import 'package:kib_utils/kib_utils.dart';
 
 // Global GetIt instance
@@ -78,6 +81,19 @@ _setupFirebaseServices() async => tryResultAsync(
     if (!getIt.isRegistered<FirebaseAuthService>()) {
       getIt.registerSingleton<FirebaseAuthService>(
         FirebaseAuthService(firebaseAuth: getIt<FirebaseAuth>()),
+      );
+    }
+
+    if (!getIt.isRegistered<FirebaseFirestore>()) {
+      getIt.registerSingleton<FirebaseFirestore>(FirebaseFirestore.instance);
+    }
+
+    if (!getIt.isRegistered<FirestoreJournalEntriesService>()) {
+      getIt.registerSingleton<FirestoreJournalEntriesService>(
+        FirestoreJournalEntriesService(
+          firestore: getIt<FirebaseFirestore>(),
+          auth: getIt<FirebaseAuth>(),
+        ),
       );
     }
 
