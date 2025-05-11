@@ -129,7 +129,7 @@ class FirestoreJournalEntriesService {
     );
   }
 
-  Future<Result<List<JournalEntry>, Exception>> getJournalEntries({
+  Future<Result<List<JournalEntry>, Exception>> getCurrentUserJournalEntries({
     bool descending = true,
   }) async {
     return await tryResultAsync<List<JournalEntry>, Exception>(
@@ -142,7 +142,34 @@ class FirestoreJournalEntriesService {
                 .orderBy('createdAt', descending: descending)
                 .get();
 
-        return querySnapshot.docs.map(JournalEntry.fromFirestore).toList();
+        final entries =
+            querySnapshot.docs.map(JournalEntry.fromFirestore).toList();
+        kprint.lg(
+          'getCurrentUserJournalEntries: ${entries.length}:\n ${entries.map((e) => '${e.userId}-[${e.title}]').join(', ')}',
+        );
+        return entries;
+      },
+      (dynamic err) =>
+          _handleFirestoreError(err, 'Error getting journal entries'),
+    );
+  }
+
+  Future<Result<List<JournalEntry>, Exception>> getAllJournalEntries({
+    bool descending = true,
+  }) async {
+    return await tryResultAsync<List<JournalEntry>, Exception>(
+      () async {
+        _checkAuth();
+        final querySnapshot =
+            await _journalEntriesRef
+                .orderBy('createdAt', descending: descending)
+                .get();
+        final List<JournalEntry> entries =
+            querySnapshot.docs.map(JournalEntry.fromFirestore).toList();
+        kprint.lg(
+          'getAllJournalEntries: ${entries.length}:\n ${entries.map((e) => '${e.userId}-[${e.title}]').join(', ')}',
+        );
+        return entries;
       },
       (dynamic err) =>
           _handleFirestoreError(err, 'Error getting journal entries'),

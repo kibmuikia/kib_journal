@@ -38,12 +38,12 @@ class FirestoreJournalServiceProvider extends ChangeNotifier {
 
   Future<void> init() async {
     if (!_status.isLoading) {
-      await loadJournalEntries(refresh: true);
+      await loadCurrentUserJournalEntries(refresh: true);
       // TODO: call _setupJournalEntriesStream
     }
   }
 
-  Future<void> loadJournalEntries({bool refresh = false}) async {
+  Future<void> loadCurrentUserJournalEntries({bool refresh = false}) async {
     _status = JournalStatus.loading;
     _errorMessage = null;
     if (refresh) {
@@ -52,7 +52,7 @@ class FirestoreJournalServiceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _journalEntriesService.getJournalEntries();
+      final result = await _journalEntriesService.getCurrentUserJournalEntries();
       switch (result) {
         case Success(value: final entries):
           _journalEntries = entries;
@@ -114,6 +114,30 @@ class FirestoreJournalServiceProvider extends ChangeNotifier {
                 : e.toString();
         notifyListeners();
         return failure(e);
+    }
+  }
+
+  Future<void> getAllJournalEntries() async {
+    /* // TODO: activate if needed 
+    _status = JournalStatus.loading;
+    notifyListeners(); */
+
+    final result = await _journalEntriesService.getAllJournalEntries();
+    switch (result) {
+      case Success(value: final entries):
+        _status = JournalStatus.loaded;
+        notifyListeners();
+        break;
+      case Failure(error: final Exception e):
+        _status = JournalStatus.error;
+        _errorMessage =
+            e is UnauthorizedException
+                ? 'You are Unauthorized'
+                : e is ExceptionX
+                ? e.message
+                : e.toString();
+        notifyListeners();
+        break;
     }
   }
 

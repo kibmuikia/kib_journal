@@ -48,6 +48,9 @@ class _HomeScreenState extends StateK<HomeScreen> {
       listen: false,
     );
     await _journalProvider.init();
+    
+    // TODO: remove after testing is done or retain-and-fix-flow if needed
+    _journalProvider.getAllJournalEntries();
   }
 
   void _getCurrentUserEmail() async {
@@ -78,7 +81,7 @@ class _HomeScreenState extends StateK<HomeScreen> {
   }
 
   Future<void> _refreshJournalEntries({bool refresh = true}) async {
-    await _journalProvider.loadJournalEntries(refresh: refresh);
+    await _journalProvider.loadCurrentUserJournalEntries(refresh: refresh);
   }
 
   void logout(BuildContext context) async {
