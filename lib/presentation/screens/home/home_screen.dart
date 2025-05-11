@@ -50,7 +50,8 @@ class _HomeScreenState extends StateK<HomeScreen> {
     await _journalProvider.init();
 
     // TODO: remove after testing is done or retain-and-fix-flow if needed
-    _journalProvider.getAllJournalEntries();
+    // _journalProvider.getAllJournalEntries();
+    _journalProvider.getJournalEntriesFromLast24Hours();
     _journalProvider.getAllUserJournalEntryTrackers();
   }
 

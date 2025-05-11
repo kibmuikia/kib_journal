@@ -177,6 +177,32 @@ class FirestoreJournalEntriesService {
     );
   }
 
+  Future<Result<List<JournalEntry>, Exception>>
+  getJournalEntriesFromLast24Hours() async {
+    return await tryResultAsync<List<JournalEntry>, Exception>(
+      () async {
+        _checkAuth();
+        final now = DateTime.now();
+        final last24Hours = now.subtract(const Duration(hours: 24));
+        final querySnapshot =
+            await _journalEntriesRef
+                .where(
+                  'createdAt',
+                  isGreaterThanOrEqualTo: Timestamp.fromDate(last24Hours),
+                )
+                .get();
+        final List<JournalEntry> entries =
+            querySnapshot.docs.map(JournalEntry.fromFirestore).toList();
+        kprint.lg(
+          'getJournalEntriesFromLast24Hours: ${entries.length}:\n ${entries.map((e) => '${e.userId}-[${e.title}]').join(', ')}',
+        );
+        return entries;
+      },
+      (dynamic err) =>
+          _handleFirestoreError(err, 'Error getting journal entries'),
+    );
+  }
+
   Future<Result<JournalEntry, Exception>> getJournalEntryById(
     String journalEntryId,
   ) async {
