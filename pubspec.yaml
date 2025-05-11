@@ -2,7 +2,7 @@ name: kib_journal
 description: "A journal app that allows users to note down their thoughts every day and have them shared with one other random person who also journaled that day."
 publish_to: 'none'
 
-version: 1.0.100+100
+version: 1.0.101+101
 
 environment:
   sdk: ^3.7.2
