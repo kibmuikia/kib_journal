@@ -24,7 +24,8 @@ class JournalEntry extends Equatable {
        updatedAt = updatedAt ?? DateTime.now(),
        assert(content.isNotEmpty),
        assert(title.isNotEmpty),
-       assert(userId.isNotEmpty);
+       assert(userId.isNotEmpty),
+       assert(id.isNotEmpty);
 
   @override
   List<Object?> get props => [id, userId, title, content, createdAt, updatedAt];
@@ -36,14 +37,40 @@ class JournalEntry extends Equatable {
 
   factory JournalEntry.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
+    final rawCreated = data['createdAt'];
+    final createdAt =
+        rawCreated is Timestamp
+            ? rawCreated.toDate()
+            : rawCreated is String
+            ? DateTime.tryParse(rawCreated)
+            : null;
+    final rawUpdated = data['updatedAt'];
+    final updatedAt =
+        rawUpdated is Timestamp
+            ? rawUpdated.toDate()
+            : rawUpdated is String
+            ? DateTime.tryParse(rawUpdated)
+            : null;
+
     return JournalEntry(
       id: doc.id,
       userId: data['userId'] ?? '',
       title: data['title'] ?? '',
       content: data['content'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
+  }
+
+  Map<String, dynamic> toMapForFirestore() {
+    return {
+      'userId': userId,
+      'title': title,
+      'content': content,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
+    };
   }
 
   JournalEntry copyWith({

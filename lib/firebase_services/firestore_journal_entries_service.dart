@@ -1,12 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:kib_debug_print/kib_debug_print.dart' show kprint;
 import 'package:kib_journal/core/errors/exceptions.dart';
 import 'package:kib_journal/data/models/journal_entry.dart';
 import 'package:kib_utils/kib_utils.dart';
+import 'package:uuid/uuid.dart';
 
 class FirestoreJournalEntriesService {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  final uuid = const Uuid();
 
   late final CollectionReference<Map<String, dynamic>> _journalEntriesRef;
 
@@ -27,10 +30,12 @@ class FirestoreJournalEntriesService {
   }
 
   Exception _handleFirestoreError(dynamic err, String messagePrefix) {
+    final type = err.runtimeType;
+    kprint.err('_handleFirestoreError:$type: $messagePrefix: $err');
     if (err is FirebaseException) {
       return ExceptionX(
         message: '$messagePrefix: ${err.message ?? err.code}',
-        errorType: err.runtimeType,
+        errorType: type,
         error: err,
         stackTrace: StackTrace.current,
       );
@@ -40,7 +45,7 @@ class FirestoreJournalEntriesService {
         ? err
         : ExceptionX(
           message: '$messagePrefix: ${err.toString()}',
-          errorType: err.runtimeType,
+          errorType: type,
           error: err,
           stackTrace: StackTrace.current,
         );
@@ -60,6 +65,7 @@ class FirestoreJournalEntriesService {
 
         final now = DateTime.now();
         final journalEntry = JournalEntry(
+          id: uuid.v4(),
           userId: _userId!,
           title: title,
           content: content,
@@ -68,7 +74,7 @@ class FirestoreJournalEntriesService {
         );
 
         final DocumentReference<Map<String, dynamic>> docRef =
-            await _journalEntriesRef.add(journalEntry.toJson());
+            await _journalEntriesRef.add(journalEntry.toMapForFirestore());
 
         // Fetch the created document to get the ID
         final docSnapshot = await docRef.get();

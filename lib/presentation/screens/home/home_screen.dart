@@ -4,10 +4,11 @@ import 'package:kib_journal/config/routes/navigation_helpers.dart';
 import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
     show AppPrefsAsyncManager;
 import 'package:kib_journal/core/utils/export.dart';
-import 'package:kib_journal/data/models/journal_entry.dart' show JournalEntry;
 import 'package:kib_journal/di/setup.dart' show getIt;
 import 'package:kib_journal/firebase_services/firestore_journal_entries_service.dart'
     show FirestoreJournalEntriesService;
+import 'package:kib_journal/presentation/reusable_widgets/add_journal_entry.dart';
+import 'package:kib_journal/presentation/reusable_widgets/journal_entry_card.dart';
 import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
 import 'package:kib_journal/providers/firestore_journal_service_provider.dart'
     show FirestoreJournalServiceProvider;
@@ -44,8 +45,8 @@ class _HomeScreenState extends StateK<HomeScreen> {
     await _journalProvider.init();
   }
 
-  Future<void> _refreshJournalEntries() async {
-    await _journalProvider.loadJournalEntries(refresh: true);
+  Future<void> _refreshJournalEntries({bool refresh = true}) async {
+    await _journalProvider.loadJournalEntries(refresh: refresh);
   }
 
   void informUser(String message) => context.showMessage(message);
@@ -58,6 +59,21 @@ class _HomeScreenState extends StateK<HomeScreen> {
       kprint.err('Failed to unset current user uid');
       (() => context.showMessage('Unable to logout'))();
     }
+  }
+
+  void _showAddJournalEntryBottomSheet(BuildContext ctx) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder:
+          (context) => AddJournalEntryForm(
+            onEntryAdded: (createdEntry) async {
+              Navigator.pop(context);
+              informUser('Journal, ${createdEntry.title}, entry added');
+              await _refreshJournalEntries(refresh: false);
+            },
+          ),
+    );
   }
 
   @override
@@ -78,7 +94,7 @@ class _HomeScreenState extends StateK<HomeScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: null,
+            onPressed: () => _showAddJournalEntryBottomSheet(context),
             child: const Icon(Icons.add),
           ),
           body: SafeArea(
@@ -113,9 +129,10 @@ class _HomeScreenState extends StateK<HomeScreen> {
                         ),
                       ),
                     if (provider.journalEntries.isNotEmpty)
-                      ListView.separated(
+                      ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
+                        itemCount: provider.journalEntries.length,
                         itemBuilder: (context, index) {
                           final journalEntry = provider.journalEntries[index];
                           return JournalEntryCard(
@@ -123,8 +140,6 @@ class _HomeScreenState extends StateK<HomeScreen> {
                             tag: 'journal-${journalEntry.id}-$index',
                           );
                         },
-                        separatorBuilder: (context, index) => const Divider(),
-                        itemCount: provider.journalEntries.length,
                       ),
                   ],
                 ),
@@ -134,48 +149,6 @@ class _HomeScreenState extends StateK<HomeScreen> {
         );
       },
       // child: ,
-    );
-  }
-}
-
-class JournalEntryCard extends StatelessWidgetK {
-  final JournalEntry entry;
-
-  JournalEntryCard({super.key, required super.tag, required this.entry});
-
-  @override
-  Widget buildWithTheme(BuildContext context) {
-    // final dateFormatter = DateFormat('MMM dd, yyyy • h:mm a');
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              entry.title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              // dateFormatter.format(entry.createdAt),
-              '${entry.createdAt.hour}:${entry.createdAt.minute}  ${entry.createdAt.day}/${entry.createdAt.month}/${entry.createdAt.year}',
-              style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              entry.content,
-              style: theme.textTheme.bodyMedium,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
