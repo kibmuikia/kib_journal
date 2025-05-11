@@ -8,14 +8,14 @@ class FirestoreJournalEntriesService {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  late final CollectionReference<Map<String, dynamic>> _journalEntries;
+  late final CollectionReference<Map<String, dynamic>> _journalEntriesRef;
 
   FirestoreJournalEntriesService({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _auth = auth ?? FirebaseAuth.instance {
-    _journalEntries = _firestore.collection('journal_entries');
+    _journalEntriesRef = _firestore.collection('journal_entries');
   }
 
   String? get _userId => _auth.currentUser?.uid;
@@ -68,7 +68,7 @@ class FirestoreJournalEntriesService {
         );
 
         final DocumentReference<Map<String, dynamic>> docRef =
-            await _journalEntries.add(journalEntry.toJson());
+            await _journalEntriesRef.add(journalEntry.toJson());
 
         // Fetch the created document to get the ID
         final docSnapshot = await docRef.get();
@@ -79,20 +79,71 @@ class FirestoreJournalEntriesService {
     );
   }
 
-  Future<Result<List<JournalEntry>, Exception>> getJournalEntries({bool descending = true}) async {
+  Future<Result<List<JournalEntry>, Exception>> getJournalEntries({
+    bool descending = true,
+  }) async {
     return await tryResultAsync<List<JournalEntry>, Exception>(
       () async {
         _checkAuth();
 
-        final querySnapshot = await _journalEntries
-            .where('userId', isEqualTo: _userId)
-            .orderBy('createdAt', descending: descending)
-            .get();
+        final querySnapshot =
+            await _journalEntriesRef
+                .where('userId', isEqualTo: _userId)
+                .orderBy('createdAt', descending: descending)
+                .get();
 
         return querySnapshot.docs.map(JournalEntry.fromFirestore).toList();
       },
       (dynamic err) =>
           _handleFirestoreError(err, 'Error getting journal entries'),
+    );
+  }
+
+  Future<Result<JournalEntry, Exception>> getJournalEntryById(
+    String journalEntryId,
+  ) async {
+    return await tryResultAsync<JournalEntry, Exception>(
+      () async {
+        if (journalEntryId.isEmpty) {
+          throw StateError('ID cannot be empty');
+        }
+        _checkAuth();
+
+        final docSnapshot = await _journalEntriesRef.doc(journalEntryId).get();
+
+        if (!docSnapshot.exists) {
+          throw NotFoundException('Journal, $journalEntryId, not found');
+        }
+
+        return JournalEntry.fromFirestore(docSnapshot);
+      },
+      (dynamic err) =>
+          _handleFirestoreError(err, 'Error getting journal entry'),
+    );
+  }
+
+  Future<Result<bool, Exception>> deleteJournalEntry(
+    String journalEntryId,
+  ) async {
+    return await tryResultAsync<bool, Exception>(
+      () async {
+        if (journalEntryId.isEmpty) {
+          throw StateError('ID cannot be empty');
+        }
+        _checkAuth();
+
+        final getResult = await getJournalEntryById(journalEntryId);
+
+        switch (getResult) {
+          case Success(value: final _):
+            await _journalEntriesRef.doc(journalEntryId).delete();
+            return true;
+          case Failure(error: final error):
+            throw error;
+        }
+      },
+      (dynamic err) =>
+          _handleFirestoreError(err, 'Error deleting journal entry'),
     );
   }
 
