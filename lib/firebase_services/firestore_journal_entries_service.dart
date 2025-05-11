@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:kib_debug_print/kib_debug_print.dart' show kprint;
 import 'package:kib_journal/core/errors/exceptions.dart';
 import 'package:kib_journal/data/models/journal_entry.dart';
+import 'package:kib_journal/data/models/user_journal_entry_tracker.dart';
 import 'package:kib_utils/kib_utils.dart';
 import 'package:uuid/uuid.dart';
 
@@ -221,6 +222,30 @@ class FirestoreJournalEntriesService {
       },
       (dynamic err) =>
           _handleFirestoreError(err, 'Error deleting journal entry'),
+    );
+  }
+
+  Future<Result<List<UserJournalEntryTracker>, Exception>>
+  getAllUserJournalEntryTrackers() async {
+    return await tryResultAsync<List<UserJournalEntryTracker>, Exception>(
+      () async {
+        final querySnapshot =
+            await _userJournalEntryTrackersRef
+                .orderBy('lastPostedAt', descending: true)
+                .get();
+        final List<UserJournalEntryTracker> userJournalEntryTrackers =
+            querySnapshot.docs
+                .map(UserJournalEntryTracker.fromFirestore)
+                .toList();
+        kprint.lg(
+          'getAllUserJournalEntryTrackers: ${userJournalEntryTrackers.length}:\n ${userJournalEntryTrackers.map((e) => '${e.userId}-[${e.lastPostedAt}]').join(', ')}',
+        );
+        return userJournalEntryTrackers;
+      },
+      (dynamic err) => _handleFirestoreError(
+        err,
+        'Error getting user journal entry trackers',
+      ),
     );
   }
 

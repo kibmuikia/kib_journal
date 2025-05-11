@@ -48,9 +48,10 @@ class _HomeScreenState extends StateK<HomeScreen> {
       listen: false,
     );
     await _journalProvider.init();
-    
+
     // TODO: remove after testing is done or retain-and-fix-flow if needed
     _journalProvider.getAllJournalEntries();
+    _journalProvider.getAllUserJournalEntryTrackers();
   }
 
   void _getCurrentUserEmail() async {
