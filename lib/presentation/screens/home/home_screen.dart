@@ -108,7 +108,17 @@ class _HomeScreenState extends StateK<HomeScreen> {
     }
   }
 
-  void _showAddJournalEntryBottomSheet(BuildContext ctx) {
+  void _showAddJournalEntryBottomSheet(BuildContext ctx) async {
+    /* // TODO: For debug only: To test sending of emails
+    final result = await _emailService.distributeJournalEntries();
+    switch (result) {
+      case Success():
+        informUser('Journal entries distributed');
+        break;
+      case Failure(error: final Exception e):
+        informUser('Error distributing journal entries: $e');
+        break;
+    } */
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

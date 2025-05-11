@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:kib_debug_print/kib_debug_print.dart';
 import 'package:kib_journal/core/errors/exceptions.dart';
 import 'package:kib_journal/data/models/journal_entry.dart';
@@ -27,25 +28,52 @@ class EmailJournalsService {
        _appEmailAddress = appEmailAddress,
        _appEmailPassword = appEmailPassword;
 
-  Future<void> initialize() async {
-    await Workmanager().initialize(callbackDispatcher);
-    await scheduleDistributionTask();
+  Future<void> initialize({bool scheduleTask = true}) async {
+    await Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: kDebugMode,
+    );
+    if (scheduleTask) {
+      await scheduleDistributionTask();
+    }
   }
 
   Future<void> scheduleDistributionTask() async {
     final now = DateTime.now();
+
     final scheduledTime = DateTime(now.year, now.month, now.day, 12, 0, 0);
+    // final scheduledTime = now.add(const Duration(minutes: 5));
+
     final initialDelay =
         scheduledTime.isAfter(now)
             ? scheduledTime.difference(now)
             : scheduledTime.add(const Duration(days: 1)).difference(now);
-    await Workmanager().registerPeriodicTask(
-      distributionTaskName,
-      distributionTaskName,
-      frequency: const Duration(days: 1),
-      initialDelay: initialDelay,
-      constraints: Constraints(networkType: NetworkType.connected),
+    kprint.lg(
+      'scheduleDistributionTask: initialDelay[ ${initialDelay.inMinutes} minutes ], scheduledTime[ ${scheduledTime.toLocal().toString().split('.')[0]} ], now[ ${now.toLocal().toString().split('.')[0]} ]',
     );
+    
+    Workmanager()
+        .registerPeriodicTask(
+          distributionTaskName,
+          distributionTaskName,
+          frequency: const Duration(days: 1),
+          // frequency: const Duration(minutes: 15),
+          initialDelay: initialDelay,
+          // initialDelay: const Duration(minutes: 1),
+          constraints: Constraints(networkType: NetworkType.connected),
+          existingWorkPolicy: ExistingWorkPolicy.replace,
+          backoffPolicy: BackoffPolicy.exponential,
+        )
+        .then(
+          (void k) => kprint.lg(
+            'scheduleDistributionTask:registerPeriodicTask:then: fired',
+          ),
+        )
+        .catchError(
+          (err) => kprint.err(
+            'scheduleDistributionTask:registerPeriodicTask:catchError: $err',
+          ),
+        );
   }
 
   Future<Result<void, Exception>> distributeJournalEntries() async {
@@ -103,7 +131,10 @@ class EmailJournalsService {
 
           final message =
               Message()
-                ..from = Address(_appEmailAddress, 'Kib Journal App')
+                ..from = Address(
+                  _appEmailAddress,
+                  'Kib Journal App${_firestoreJournalService.currentUser?.email == null ? '' : ' - ${_firestoreJournalService.currentUser?.email}'}',
+                )
                 ..recipients.add(user.userEmail)
                 ..subject = 'Your Daily Journal Surprise'
                 ..html = '''
@@ -115,6 +146,9 @@ class EmailJournalsService {
 
           try {
             await send(message, smtpServer);
+            kprint.lg(
+              'Email sent to ${user.userEmail} by ${_firestoreJournalService.currentUser?.email}',
+            );
           } catch (e) {
             kprint.err('Error sending email to ${user.userEmail}: $e');
           }
@@ -143,8 +177,10 @@ class EmailJournalsService {
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     if (taskName == EmailJournalsService.distributionTaskName) {
-      // Get the service from the service locator
-      final service = getIt<EmailJournalsService>();
+      await setupServiceLocator();
+      await getIt.allReady();
+      await getIt<EmailJournalsService>().initialize(scheduleTask: false);
+      final service = await getIt.getAsync<EmailJournalsService>();
       await service.distributeJournalEntries();
     }
     return true;
