@@ -5,14 +5,14 @@ A Flutter Android app for sharing anonymous daily journal entries.
 ## Features
 
 - Journal sharing, 500 character limit per entry
+- Send emails to users via a background worker.
 
 ## Tech Stack
 
 - Flutter SDK: ^3.7.2
-- Firebase
+- Firebase - For Authentication and Database(Firestore)
 - GetIt for dependency injection
 - Go-Router for navigation
-- Bloc for state management
 
 ## Getting Started
 
