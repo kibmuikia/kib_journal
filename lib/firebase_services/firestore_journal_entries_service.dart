@@ -12,6 +12,8 @@ class FirestoreJournalEntriesService {
   final uuid = const Uuid();
 
   late final CollectionReference<Map<String, dynamic>> _journalEntriesRef;
+  late final CollectionReference<Map<String, dynamic>>
+  _userJournalEntryTrackersRef;
 
   FirestoreJournalEntriesService({
     FirebaseFirestore? firestore,
@@ -19,6 +21,9 @@ class FirestoreJournalEntriesService {
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _auth = auth ?? FirebaseAuth.instance {
     _journalEntriesRef = _firestore.collection('journal_entries');
+    _userJournalEntryTrackersRef = _firestore.collection(
+      'user_journal_entry_trackers',
+    );
   }
 
   String? get _userId => _auth.currentUser?.uid;
@@ -76,12 +81,51 @@ class FirestoreJournalEntriesService {
         final DocumentReference<Map<String, dynamic>> docRef =
             await _journalEntriesRef.add(journalEntry.toMapForFirestore());
 
-        // Fetch the created document to get the ID
         final docSnapshot = await docRef.get();
+
+        final updateTrackerResult =
+            await updateUserJournalEntryTrackerAfterPosting();
+        if (updateTrackerResult.isFailure) {
+          kprint.err(
+            'createJournalEntry: Error updating user journal entry tracker: ${updateTrackerResult.errorOrNull}',
+          );
+        }
+
         return JournalEntry.fromFirestore(docSnapshot);
       },
       (dynamic err) =>
           _handleFirestoreError(err, 'Error creating journal entry'),
+    );
+  }
+
+  Future<Result<void, Exception>>
+  updateUserJournalEntryTrackerAfterPosting() async {
+    return await tryResultAsync<void, Exception>(
+      () async {
+        _checkAuth();
+
+        final docRef = _userJournalEntryTrackersRef.doc(_userId!);
+        final docSnapshot = await docRef.get();
+        final nowTimestamp = Timestamp.fromDate(DateTime.now());
+        if (docSnapshot.exists) {
+          await docRef.update({
+            'lastPostedAt': nowTimestamp,
+            'updatedAt': nowTimestamp,
+          });
+        } else {
+          await docRef.set({
+            'userId': _userId,
+            'userEmail': _auth.currentUser?.email,
+            'lastPostedAt': nowTimestamp,
+            'createdAt': nowTimestamp,
+            'updatedAt': nowTimestamp,
+          });
+        }
+      },
+      (dynamic err) => _handleFirestoreError(
+        err,
+        'Error updating user journal entry tracker',
+      ),
     );
   }
 

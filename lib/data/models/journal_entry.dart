@@ -23,7 +23,7 @@ class JournalEntry extends Equatable {
   }) : createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now(),
        assert(content.isNotEmpty, 'Content cannot be empty'),
-       assert(content.length > 500, 'Content must be less than 500 characters'),
+       assert(content.length < 500, 'Content must be less than 500 characters'),
        assert(title.isNotEmpty, 'Title cannot be empty'),
        assert(userId.isNotEmpty, 'User ID cannot be empty'),
        assert(id.isNotEmpty, 'ID cannot be empty');
