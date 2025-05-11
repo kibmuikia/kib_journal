@@ -12,6 +12,7 @@ import 'package:kib_journal/presentation/reusable_widgets/journal_entry_card.dar
 import 'package:kib_journal/presentation/reusable_widgets/stateful_widget_x.dart';
 import 'package:kib_journal/providers/firestore_journal_service_provider.dart'
     show FirestoreJournalServiceProvider;
+import 'package:kib_journal/services/email_journals_service.dart';
 import 'package:kib_utils/kib_utils.dart';
 import 'package:provider/provider.dart' show Consumer, Provider;
 
@@ -25,6 +26,7 @@ class HomeScreen extends StatefulWidgetK {
 class _HomeScreenState extends StateK<HomeScreen> {
   final _appPrefs = getIt<AppPrefsAsyncManager>();
   final _authService = getIt<FirebaseAuthService>();
+  late final EmailJournalsService _emailService;
   late final FirestoreJournalServiceProvider _journalProvider;
   final _refreshKey = GlobalKey<RefreshIndicatorState>();
   String _currentUserEmail = '';
@@ -39,6 +41,7 @@ class _HomeScreenState extends StateK<HomeScreen> {
     postFrame(() async {
       _initJournalProvider();
       _getCurrentUserEmail();
+      _emailService = await getIt.getAsync<EmailJournalsService>();
     });
   }
 
