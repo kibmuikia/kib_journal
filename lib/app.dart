@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:kib_debug_print/kib_debug_print.dart' show kprint;
 import 'package:kib_journal/config/routes/router_config.dart';
 import 'package:kib_journal/config/theme/app_theme.dart' show AppThemeConfig;
 import 'package:kib_journal/core/constants/app_constants.dart' show appName;
@@ -24,19 +23,12 @@ class _KibJournalState extends StateK<KibJournal> {
   void initState() {
     super.initState();
     _prefs = getIt<AppPrefsAsyncManager>();
-    _debugUseOfPrefs();
+    _updatePrefFirstLaunch();
   }
 
-  @Deprecated('For debugging purposes only')
-  void _debugUseOfPrefs() async {
+  void _updatePrefFirstLaunch() async {
     postFrame(() async {
-      kprint.lg(
-        '_KibJournalState:_debugUseOfPrefs: ${await _prefs.isFirstLaunch()}',
-      );
       await _prefs.setFirstLaunch(false);
-      kprint.lg(
-        '_KibJournalState:_debugUseOfPrefs: ${await _prefs.isFirstLaunch()}',
-      );
     });
   }
 

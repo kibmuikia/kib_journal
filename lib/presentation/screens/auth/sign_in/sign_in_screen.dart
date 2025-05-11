@@ -1,8 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart' show UserCredential;
+import 'package:firebase_auth/firebase_auth.dart' show User, UserCredential;
 import 'package:flutter/material.dart';
 import 'package:kib_debug_print/kib_debug_print.dart' show kprint;
 import 'package:kib_journal/config/routes/navigation_helpers.dart';
+import 'package:kib_journal/core/constants/app_constants.dart';
 import 'package:kib_journal/core/errors/exceptions.dart' show ExceptionX;
+import 'package:kib_journal/core/preferences/shared_preferences_manager.dart';
+import 'package:kib_journal/core/utils/snackbar_utils.dart';
 import 'package:kib_journal/di/setup.dart' show getIt;
 import 'package:kib_journal/firebase_services/firebase_auth_service.dart'
     show FirebaseAuthService;
@@ -21,6 +24,7 @@ class _SignInScreenState extends StateK<SignInScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = getIt<FirebaseAuthService>();
+  final _appPrefs = getIt<AppPrefsAsyncManager>();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -52,10 +56,60 @@ class _SignInScreenState extends StateK<SignInScreen> {
     );
     switch (result) {
       case Success(value: final UserCredential userCredentials):
-        kprint.lg('_signIn: $userCredentials');
+        kprint.lg('_signIn: ${userCredentials.user}');
         setState(() {
           _isLoading = false;
         });
+        /* // TODO: to be removed, just for reference
+          {
+            "signIn": {
+              "additionalUserInfo": {
+                "isNewUser": false,
+                "profile": {},
+                "providerId": null,
+                "username": null,
+                "authorizationCode": null
+              },
+              "credential": null,
+              "user": {
+                "displayName": null,
+                "email": "test_one@sample.com",
+                "isEmailVerified": false,
+                "isAnonymous": false,
+                "metadata": {
+                  "creationTime": "2025-05-11T05:58:54.758Z",
+                  "lastSignInTime": "2025-05-11T06:16:18.177Z"
+                },
+                "phoneNumber": null,
+                "photoURL": null,
+                "providerData": [
+                  {
+                    "displayName": null,
+                    "email": "test_one@sample.com",
+                    "phoneNumber": null,
+                    "photoURL": null,
+                    "providerId": "password",
+                    "uid": "test_one@sample.com"
+                  }
+                ],
+                "refreshToken": null,
+                "tenantId": null,
+                "uid": "q8mrjnJxQZOTyuNEajXOgdKL4Tr1"
+              }
+            }
+          } 
+         */
+        final User? user = userCredentials.user;
+        if (user == null) {
+          setState(() {
+            _errorMessage = 'No user data available';
+          });
+          return;
+        }
+
+        final userUid = user.uid;
+        await _appPrefs.setCurrentUserUid(userUid);
+
         navigateToHome(context);
         break;
       case Failure(error: final Exception e):
@@ -127,7 +181,10 @@ class _SignInScreenState extends StateK<SignInScreen> {
                 ],
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _isLoading ? null : () => _signIn(context),
+                  onPressed:
+                      _isLoading
+                          ? () => context.showMessage(invalidAction)
+                          : () => _signIn(context),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
