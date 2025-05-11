@@ -37,6 +37,13 @@ dependencies:
   cloud_firestore: ^5.6.7
   collection: ^1.19.1
   provider: ^6.1.5
+  mailer: ^6.4.1
+  flutter_local_notifications: ^19.2.0
+  # workmanager: ^0.5.2
+  workmanager:
+    git:
+      url: https://github.com/aldisa546/flutter_workmanager.git
+      ref: upgrade/flutter-3.29
   
 
 dev_dependencies:
