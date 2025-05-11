@@ -58,6 +58,7 @@ class _SignUpScreenState extends StateK<SignUpScreen> {
         setState(() {
           _isLoading = false;
         });
+        // TODO: Navigate to home screen or have a verification flow
         break;
       case Failure(error: final Exception e):
         setState(() {
