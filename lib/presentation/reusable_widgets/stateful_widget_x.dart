@@ -2,9 +2,9 @@ import 'package:flutter/material.dart'
     show
         BuildContext,
         ColorScheme,
-        MediaQuery,
         State,
         StatefulWidget,
+        StatelessWidget,
         TextTheme,
         Theme,
         ThemeData,
@@ -52,6 +52,37 @@ abstract class StateK<T extends StatefulWidgetK> extends State<T> {
       super.setState(fn);
     }
   }
+
+  @override
+  Widget build(BuildContext context) {
+    _theme = Theme.of(context);
+    _colorScheme = _theme.colorScheme;
+    _textTheme = _theme.textTheme;
+    return buildWithTheme(context);
+  }
+
+  @protected
+  Widget buildWithTheme(BuildContext context);
+}
+
+abstract class StatelessWidgetK extends StatelessWidget {
+  final String tag;
+
+  StatelessWidgetK({super.key, required this.tag})
+    : assert(tag.isNotEmpty, 'Tag must not be empty');
+
+  late ThemeData _theme;
+  late ColorScheme _colorScheme;
+  late TextTheme _textTheme;
+
+  @protected
+  ThemeData get theme => _theme;
+
+  @protected
+  ColorScheme get colorScheme => _colorScheme;
+
+  @protected
+  TextTheme get textTheme => _textTheme;
 
   @override
   Widget build(BuildContext context) {
