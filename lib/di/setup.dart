@@ -8,10 +8,13 @@ import 'package:kib_journal/config/routes/router_config.dart'
 import 'package:kib_journal/core/errors/exceptions.dart' show ExceptionX;
 import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
     show AppPrefsAsyncManager, AppPrefs;
+import 'package:kib_journal/di/confidential.dart';
 import 'package:kib_journal/firebase_services/firebase_auth_service.dart'
     show FirebaseAuthService;
 import 'package:kib_journal/firebase_services/firestore_journal_entries_service.dart'
     show FirestoreJournalEntriesService;
+import 'package:kib_journal/services/email_journals_service.dart'
+    show EmailJournalsService;
 import 'package:kib_utils/kib_utils.dart';
 
 // Global GetIt instance
@@ -24,6 +27,7 @@ Future<Result<bool, Exception>> setupServiceLocator() async {
       _setupAppPrefs();
       await _setupFirebaseServices();
       _setupAppNavigation();
+      _setupEmailJournalsService();
 
       return true;
     },
@@ -49,7 +53,7 @@ void _setupAppPrefs() {
   }
 }
 
-// Setup app navigation
+/// Setup Kib Journal Navigation
 void _setupAppNavigation() {
   if (!AppPrefs.isInitialized) {
     AppPrefs.init();
@@ -63,6 +67,7 @@ void _setupAppNavigation() {
   }
 }
 
+/// Setup Firebase services
 Future<Result<bool, Exception>>
 _setupFirebaseServices() async => tryResultAsync(
   () async {
@@ -110,3 +115,17 @@ _setupFirebaseServices() async => tryResultAsync(
             stackTrace: StackTrace.current,
           ),
 );
+
+/// Setup Kib Journal EmailJournalsService
+void _setupEmailJournalsService() {
+  if (!getIt.isRegistered<EmailJournalsService>()) {
+    getIt.registerLazySingletonAsync<EmailJournalsService>(() async {
+      final emailJournalsService = EmailJournalsService(
+        appEmailAddress: appEmailAddress,
+        appEmailPassword: appEmailPassword,
+      );
+      await emailJournalsService.initialize();
+      return emailJournalsService;
+    });
+  }
+}

@@ -20,9 +20,9 @@ Future<void> _initializeCoreServices() async {
   final result = await setupServiceLocator();
   switch (result) {
     case Success<bool, Exception>():
+      await getIt.allReady();
       break;
     case Failure<bool, Exception>():
       throw result.error;
   }
-  await getIt.allReady();
 }
