@@ -64,5 +64,6 @@ tree.txt
 notes.txt
 
 firebase.json
+lib/firebase_options.dart
 
 lib/di/confidential.dart
