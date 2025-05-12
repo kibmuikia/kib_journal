@@ -211,6 +211,9 @@ class _HomeScreenState extends StateK<HomeScreen> {
                           return JournalEntryCard(
                             entry: journalEntry,
                             tag: 'journal-${journalEntry.id}-$index',
+                            onDelete: (journal) {
+                              informUser('Journal, ${journal.title}, to be deleted');
+                            },
                           );
                         },
                       ),
