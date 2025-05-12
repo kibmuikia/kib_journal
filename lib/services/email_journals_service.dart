@@ -1,11 +1,17 @@
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kib_debug_print/kib_debug_print.dart';
 import 'package:kib_journal/core/errors/exceptions.dart';
 import 'package:kib_journal/data/models/journal_entry.dart';
 import 'package:kib_journal/data/models/user_journal_entry_tracker.dart';
+import 'package:kib_journal/di/confidential.dart';
 import 'package:kib_journal/di/setup.dart';
+import 'package:kib_journal/firebase_options.dart';
+import 'package:kib_journal/firebase_services/firebase_auth_service.dart';
 import 'package:kib_journal/firebase_services/firestore_journal_entries_service.dart';
 import 'package:kib_utils/kib_utils.dart';
 import 'package:mailer/mailer.dart';
@@ -14,6 +20,7 @@ import 'package:workmanager/workmanager.dart';
 
 class EmailJournalsService {
   static const String distributionTaskName = 'journal_distribution_task';
+  static const String testTaskName = 'journal_test_task';
 
   final FirestoreJournalEntriesService _firestoreJournalService;
   final String _appEmailAddress;
@@ -29,13 +36,35 @@ class EmailJournalsService {
        _appEmailPassword = appEmailPassword;
 
   Future<void> initialize({bool scheduleTask = true}) async {
-    await Workmanager().initialize(
-      callbackDispatcher,
-      isInDebugMode: kDebugMode,
-    );
     if (scheduleTask) {
+      await Workmanager().initialize(
+        callbackDispatcher,
+        isInDebugMode: kDebugMode,
+      );
+
+      await scheduleTestTask();
       await scheduleDistributionTask();
     }
+  }
+
+  Future<void> scheduleTestTask() async {
+    Workmanager().registerPeriodicTask(
+      testTaskName,
+      testTaskName,
+      tag: '$testTaskName-${DateTime.now().millisecondsSinceEpoch}',
+      frequency: const Duration(minutes: 15),
+      initialDelay: const Duration(minutes: 1),
+      constraints: Constraints(networkType: NetworkType.connected),
+      existingWorkPolicy: ExistingWorkPolicy.replace,
+      backoffPolicy: BackoffPolicy.exponential,
+    );
+  }
+
+  Future<Result<Object?, Exception>> testTask() async {
+    kprint.lg('testTask:start');
+    await Future.delayed(const Duration(seconds: 2));
+    kprint.lg('testTask:end');
+    return const Success('Done');
   }
 
   Future<void> scheduleDistributionTask() async {
@@ -51,11 +80,12 @@ class EmailJournalsService {
     kprint.lg(
       'scheduleDistributionTask: initialDelay[ ${initialDelay.inMinutes} minutes ], scheduledTime[ ${scheduledTime.toLocal().toString().split('.')[0]} ], now[ ${now.toLocal().toString().split('.')[0]} ]',
     );
-    
+
     Workmanager()
         .registerPeriodicTask(
           distributionTaskName,
           distributionTaskName,
+          tag: '$distributionTaskName-${now.millisecondsSinceEpoch}',
           frequency: const Duration(days: 1),
           // frequency: const Duration(minutes: 15),
           initialDelay: initialDelay,
@@ -79,6 +109,7 @@ class EmailJournalsService {
   Future<Result<void, Exception>> distributeJournalEntries() async {
     return await tryResultAsync(
       () async {
+        kprint.lg('distributeJournalEntries:start');
         final usersResult =
             await _firestoreJournalService.getAllUsersWhoPostedInLast24Hours();
         if (usersResult.isFailure) {
@@ -153,7 +184,7 @@ class EmailJournalsService {
             kprint.err('Error sending email to ${user.userEmail}: $e');
           }
         }
-
+        kprint.lg('distributeJournalEntries:end');
         //
       },
       (err) {
@@ -174,15 +205,47 @@ class EmailJournalsService {
 }
 
 @pragma('vm:entry-point')
-void callbackDispatcher() {
+void callbackDispatcher() async {
   Workmanager().executeTask((taskName, inputData) async {
-    if (taskName == EmailJournalsService.distributionTaskName) {
-      await setupServiceLocator();
-      await getIt.allReady();
-      await getIt<EmailJournalsService>().initialize(scheduleTask: false);
-      final service = await getIt.getAsync<EmailJournalsService>();
-      await service.distributeJournalEntries();
+    kprint.lg(
+      'callbackDispatcher:taskName[ $taskName ]: inputData: ${inputData == null ? 'null' : 'Not-null'}',
+    );
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      final firebaseAuth = FirebaseAuth.instance;
+      final firebaseAuthService = FirebaseAuthService(
+        firebaseAuth: firebaseAuth,
+      );
+      final firestore = FirebaseFirestore.instance;
+      final firestoreJournalService = FirestoreJournalEntriesService(
+        firestore: firestore,
+        auth: firebaseAuth,
+      );
+      final emailJournalsService = EmailJournalsService(
+        journalService: firestoreJournalService,
+        appEmailAddress: appEmailAddress,
+        appEmailPassword: appEmailPassword,
+      );
+      await emailJournalsService.initialize(scheduleTask: false);
+
+      if (taskName == EmailJournalsService.testTaskName) {
+        kprint.lg('callbackDispatcher:taskName[ $taskName ]: start testTask');
+        await emailJournalsService.testTask();
+      }
+      if (taskName == EmailJournalsService.distributionTaskName) {
+        kprint.lg(
+          'callbackDispatcher:taskName[ $taskName ]: start distributeJournalEntries',
+        );
+        await emailJournalsService.distributeJournalEntries();
+      }
+      return true;
+    } catch (e) {
+      kprint.err(
+        'callbackDispatcher:taskName[ $taskName ]: Error-${e.runtimeType};\n$e',
+      );
+      return false;
     }
-    return true;
   });
 }
