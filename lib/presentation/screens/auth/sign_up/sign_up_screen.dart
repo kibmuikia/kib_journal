@@ -38,7 +38,7 @@ class _SignUpScreenState extends StateK<SignUpScreen> {
     super.dispose();
   }
 
-  void _signUp() async {
+  void _signUp(BuildContext context) async {
     if (!_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = false;
@@ -81,14 +81,10 @@ class _SignUpScreenState extends StateK<SignUpScreen> {
             kprint.lg('_signUp: signInResult: $userCredential');
             final signedInUser = userCredential.user;
             if (signedInUser == null) {
-              setState(() {
-                _isLoading = false;
-                _errorMessage =
-                    'Received a success sign-in-result, but user is null';
-              });
-              informUser('Failed to sign in user ${createdUser.email}');
-              await Future.delayed(const Duration(milliseconds: 500));
-              (() => navigateToSignIn(context))();
+              _handledFailedSignIn(
+                'Received a success sign-in-result, but user is null',
+                'Failed to sign in user ${createdUser.email}',
+              );
               return;
             }
 
@@ -100,13 +96,10 @@ class _SignUpScreenState extends StateK<SignUpScreen> {
             (() => navigateToHome(context))();
             break;
           case Failure(error: final Exception e):
-            setState(() {
-              _isLoading = false;
-              _errorMessage = e is ExceptionX ? e.message : e.toString();
-            });
-            informUser('Failed to sign in user ${createdUser.email}');
-            await Future.delayed(const Duration(milliseconds: 500));
-            (() => navigateToSignIn(context))();
+            _handledFailedSignIn(
+              e is ExceptionX ? e.message : e.toString(),
+              'Failed to sign in user ${createdUser.email}',
+            );
             break;
         }
         break;
@@ -117,6 +110,19 @@ class _SignUpScreenState extends StateK<SignUpScreen> {
         });
         break;
     }
+  }
+
+  void _handledFailedSignIn(
+    String errorMessage,
+    String informUserMessage,
+  ) async {
+    setState(() {
+      _isLoading = false;
+      _errorMessage = errorMessage;
+    });
+    informUser(informUserMessage);
+    await Future.delayed(const Duration(milliseconds: 500));
+    (() => navigateToSignIn(context))();
   }
 
   @override
@@ -197,7 +203,7 @@ class _SignUpScreenState extends StateK<SignUpScreen> {
                 ],
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _signUp,
+                  onPressed: _isLoading ? null : () => _signUp(context),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
