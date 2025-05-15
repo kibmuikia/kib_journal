@@ -192,5 +192,29 @@ class FirestoreJournalServiceProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> handleDeleteJournalEntry(JournalEntry journal) async {
+    _status = JournalStatus.loading;
+    notifyListeners();
+
+    final result = await _journalEntriesService.deleteJournalEntry(journal.id);
+    switch (result) {
+      case Success(value: final _):
+        _journalEntries.remove(journal);
+        _status = JournalStatus.loaded;
+        notifyListeners();
+        break;
+      case Failure(error: final Exception e):
+        _status = JournalStatus.error;
+        _errorMessage =
+            e is UnauthorizedException
+                ? 'You are Unauthorized'
+                : e is ExceptionX
+                ? e.message
+                : e.toString();
+        notifyListeners();
+        break;
+    }
+  }
+
   //
 }

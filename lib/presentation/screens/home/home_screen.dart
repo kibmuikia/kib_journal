@@ -4,6 +4,7 @@ import 'package:kib_journal/config/routes/navigation_helpers.dart';
 import 'package:kib_journal/core/preferences/shared_preferences_manager.dart'
     show AppPrefsAsyncManager;
 import 'package:kib_journal/core/utils/export.dart';
+import 'package:kib_journal/data/models/journal_entry.dart';
 import 'package:kib_journal/di/setup.dart' show getIt;
 import 'package:kib_journal/firebase_services/firebase_auth_service.dart'
     show FirebaseAuthService;
@@ -133,6 +134,11 @@ class _HomeScreenState extends StateK<HomeScreen> {
     );
   }
 
+  void _handleOnDelete(JournalEntry journal) async {
+    await _journalProvider.handleDeleteJournalEntry(journal);
+    await _refreshJournalEntries(refresh: false);
+  }
+
   @override
   Widget buildWithTheme(BuildContext context) {
     return Consumer<FirestoreJournalServiceProvider>(
@@ -189,8 +195,10 @@ class _HomeScreenState extends StateK<HomeScreen> {
                         provider.journalEntries.isEmpty)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
-                        child: const Text(
+                        child: Text(
                           'No journal entries yet.\nUse the + button to add one.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium,
                         ),
                       ),
                     if (provider.status.isError)
@@ -211,9 +219,7 @@ class _HomeScreenState extends StateK<HomeScreen> {
                           return JournalEntryCard(
                             entry: journalEntry,
                             tag: 'journal-${journalEntry.id}-$index',
-                            onDelete: (journal) {
-                              informUser('Journal, ${journal.title}, to be deleted');
-                            },
+                            onDelete: (journal) => _handleOnDelete(journal),
                           );
                         },
                       ),
